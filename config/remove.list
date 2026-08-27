@@ -1,0 +1,20 @@
+# Packages to remove from Ubuntu base to create Subu5 identity
+# Ubuntu branding
+ubuntu-wallpapers
+ubuntu-artwork
+ubuntu-docs
+ubuntu-session
+ubuntu-desktop
+
+# Ubuntu specific tools
+ubuntu-report
+ubuntu-release-upgrader-gtk
+update-notifier
+software-properties-gtk
+
+# Canonical/Ubuntu specific
+canonical-livepatch
+canonical-publisher
+snapd
+
+# Note: Be careful with removing packages as some may have dependencies

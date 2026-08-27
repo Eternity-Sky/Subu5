@@ -1,0 +1,32 @@
+# Build artifacts
+output/
+build/
+*.iso
+*.img
+
+# Temporary files
+*.tmp
+*.log
+*~
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+
+# Archives
+*.tar.gz
+*.tar.xz
+*.zip

@@ -1,0 +1,42 @@
+# Subu5 default packages
+# This list defines packages to include in the Subu5 Desktop ISO
+
+# Desktop environment
+gnome-session
+gnome-shell
+gdm3
+
+# Core applications
+firefox
+thunderbird
+libreoffice
+gnome-terminal
+nautilus
+evince
+eog
+
+# System utilities
+gparted
+gnome-disk-utility
+baobab
+gnome-system-monitor
+
+# Network
+network-manager
+network-manager-gnome
+
+# Multimedia
+vlc
+rhythmbox
+shotwell
+
+# Development tools
+git
+vim
+nano
+build-essential
+
+# Subu5-specific (will be added later)
+# subu5-desktop
+# subu5-theme
+# subu5-welcome

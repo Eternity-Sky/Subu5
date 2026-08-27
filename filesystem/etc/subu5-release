@@ -1,0 +1,7 @@
+NAME="Subu5"
+VERSION="1.0.0"
+ID=subu5
+ID_LIKE=ubuntu
+PRETTY_NAME="Subu5 1.0.0"
+VERSION_ID="1.0"
+UBUNTU_CODENAME=noble

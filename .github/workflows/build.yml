@@ -1,0 +1,56 @@
+name: Build Subu5
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Show system
+        run: |
+          uname -a
+          lsb_release -a
+          df -h
+
+      - name: Install build dependencies
+        run: |
+          sudo apt update
+
+          sudo apt install -y \
+            livecd-rootfs \
+            xorriso \
+            squashfs-tools \
+            grub-pc-bin \
+            grub-efi-amd64-bin \
+            grub-efi-amd64-signed \
+            shim-signed \
+            mtools \
+            dosfstools \
+            rsync \
+            debootstrap
+
+      - name: Build Subu5
+        run: |
+          chmod +x scripts/build.sh
+          sudo ./scripts/build.sh
+
+      - name: List output
+        run: |
+          find . -type f \
+            \( -name "*.iso" -o -name "*.img" \) \
+            -print
+
+      - name: Upload ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: Subu5-ISO
+          path: |
+            output/*.iso
