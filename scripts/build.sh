@@ -1,86 +1,160 @@
 #!/bin/bash
 
-set -e
+set -Eeuo pipefail
 
-PROJECT="subu5"
+PROJECT="ubuntu"
+SUBPROJECT="live"
 SUITE="noble"
 ARCH="amd64"
 
-echo "================================"
-echo "        Building Subu5"
-echo "================================"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+BUILD_DIR="${ROOT_DIR}/build"
+OUTPUT_DIR="${ROOT_DIR}/output"
 
-echo "Project: $PROJECT"
-echo "Suite:   $SUITE"
-echo "Arch:    $ARCH"
+LIVECD_ROOTFS="/usr/share/livecd-rootfs/live-build/auto"
 
-mkdir -p output
-mkdir -p build
+echo "=============================================="
+echo "              Building Subu5"
+echo "=============================================="
+echo "Base:       Ubuntu ${SUITE}"
+echo "Project:    ${PROJECT}"
+echo "Subproject: ${SUBPROJECT}"
+echo "Architecture: ${ARCH}"
+echo "=============================================="
 
-echo "[1/5] Preparing..."
+mkdir -p "${OUTPUT_DIR}"
 
-# Set up livecd-rootfs configuration
-mkdir -p build/config
-cd build
+cd "${BUILD_DIR}" 2>/dev/null || {
+    mkdir -p "${BUILD_DIR}"
+    cd "${BUILD_DIR}"
+}
 
-# Configure livecd-rootfs for Ubuntu Desktop base
-cat > config/autoconfig << 'EOF'
-LB_DISTRIBUTION="noble"
-LB_PARENT_DISTRIBUTION="noble"
-LB_DEBIAN_INSTALLER="none"
-LB_BOOTLOADER="grub"
-LB_INITRAMFS="live-boot"
-LB_INITSYSTEM="systemd"
-LB_APPLICATIONS=""
-LB_TASKS="standard"
-LB_PACKAGES=""
-EOF
+echo
+echo "[1/6] Checking build environment..."
 
-echo "[2/5] Applying Subu5 configuration..."
-
-# Create overlay directory
-mkdir -p config/overlay
-
-# Copy filesystem overlay
-if [ -d "../filesystem" ]; then
-    echo "Copying filesystem overlay..."
-    rsync -a ../filesystem/ config/overlay/
+if [ ! -x "${LIVECD_ROOTFS}/config" ]; then
+    echo "ERROR: livecd-rootfs config script not found:"
+    echo "  ${LIVECD_ROOTFS}/config"
+    exit 1
 fi
 
-# Execute hooks
-if [ -d "../hooks" ]; then
-    echo "Running hooks..."
-    for hook in ../hooks/*.sh; do
-        if [ -f "$hook" ]; then
-            echo "Running $(basename $hook)..."
-            bash "$hook"
-        fi
-    done
+if [ ! -x "${LIVECD_ROOTFS}/build" ]; then
+    echo "ERROR: livecd-rootfs build script not found:"
+    echo "  ${LIVECD_ROOTFS}/build"
+    exit 1
 fi
 
-echo "[3/5] Building filesystem..."
+echo "livecd-rootfs found."
 
-# Build with livecd-rootfs
-# This is a placeholder - actual livecd-rootfs commands will be added
-# based on the specific Ubuntu image building approach chosen
-echo "Building rootfs with livecd-rootfs..."
-# sudo lb config --config config
-# sudo lb build
+echo
+echo "[2/6] Preparing livecd-rootfs..."
 
-echo "[4/5] Creating ISO..."
+rm -rf auto config .build
+mkdir -p auto
 
-# ISO generation placeholder
-# echo "Creating ISO image..."
-# xorriso -as mkisofs -r -J -joliet-long -l \
-#   -b boot/grub/i386-pc/eltorito.img \
-#   -no-emul-boot -boot-load-size 4 -boot-info-table \
-#   -eltorito-alt-boot -e boot/grub/efi.img \
-#   -no-emul-boot -isohybrid-gpt-basdat \
-#   -isohybrid-apm-hfsplus \
-#   -o ../output/${PROJECT}-${SUITE}-${ARCH}.iso \
-#   iso/
+ln -sf "${LIVECD_ROOTFS}/clean" auto/clean
+ln -sf "${LIVECD_ROOTFS}/config" auto/config
+ln -sf "${LIVECD_ROOTFS}/build" auto/build
 
-echo "[5/5] Done."
+echo "Creating livecd-rootfs configuration..."
 
-cd ..
-ls -lh output/
+sudo env \
+    ARCH="${ARCH}" \
+    PROJECT="${PROJECT}" \
+    SUBPROJECT="${SUBPROJECT}" \
+    SUITE="${SUITE}" \
+    "${LIVECD_ROOTFS}/config"
+
+echo
+echo "[3/6] Applying Subu5 filesystem..."
+
+# live-build uses config/includes.chroot as the filesystem overlay.
+mkdir -p config/includes.chroot
+
+if [ -d "${ROOT_DIR}/filesystem" ]; then
+    echo "Copying filesystem/..."
+    rsync -a \
+        "${ROOT_DIR}/filesystem/" \
+        config/includes.chroot/
+fi
+
+echo
+echo "[4/6] Adding Subu5 packages..."
+
+mkdir -p config/package-lists
+
+if [ -f "${ROOT_DIR}/config/packages.list" ]; then
+    cp "${ROOT_DIR}/config/packages.list" \
+        config/package-lists/subu5.list.chroot
+
+    echo "Added Subu5 package list."
+fi
+
+echo
+echo "[5/6] Building Subu5 ISO..."
+echo
+
+sudo env \
+    ARCH="${ARCH}" \
+    PROJECT="${PROJECT}" \
+    SUBPROJECT="${SUBPROJECT}" \
+    SUITE="${SUITE}" \
+    "${LIVECD_ROOTFS}/build"
+
+echo
+echo "[6/6] Collecting ISO..."
+
+ISO_FILE=""
+
+for candidate in \
+    livecd.ubuntu.iso \
+    livecd.ubuntu.iso.zsync \
+    livecd.ubuntu.iso.*; do
+
+    if [ -f "${candidate}" ]; then
+        ISO_FILE="${candidate}"
+        break
+    fi
+done
+
+if [ -z "${ISO_FILE}" ]; then
+    echo
+    echo "ERROR: ISO was not generated."
+    echo
+    echo "Build directory contents:"
+    find . -maxdepth 3 -type f -print | sort
+    exit 1
+fi
+
+echo "Found ISO:"
+echo "  ${ISO_FILE}"
+
+if [[ "${ISO_FILE}" == *.zsync ]]; then
+    ISO_FILE="${ISO_FILE%.zsync}"
+fi
+
+if [ ! -f "${ISO_FILE}" ]; then
+    echo "ERROR: Final ISO does not exist."
+    exit 1
+fi
+
+TARGET="${OUTPUT_DIR}/Subu5-${SUITE}-${ARCH}.iso"
+
+echo
+echo "Copying:"
+echo "  ${ISO_FILE}"
+echo "to:"
+echo "  ${TARGET}"
+
+cp -f "${ISO_FILE}" "${TARGET}"
+
+echo
+echo "=============================================="
+echo "             Subu5 build complete"
+echo "=============================================="
+
+ls -lh "${TARGET}"
+
+echo
+echo "SHA256:"
+sha256sum "${TARGET}"

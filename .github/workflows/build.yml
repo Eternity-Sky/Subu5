@@ -8,11 +8,12 @@ on:
 
 jobs:
   build:
+    name: Build Subu5 ISO
     runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Show system
         run: |
@@ -22,10 +23,11 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          sudo apt update
+          sudo apt-get update
 
-          sudo apt install -y \
+          sudo apt-get install -y \
             livecd-rootfs \
+            live-build \
             xorriso \
             squashfs-tools \
             grub-pc-bin \
@@ -35,22 +37,28 @@ jobs:
             mtools \
             dosfstools \
             rsync \
-            debootstrap
+            debootstrap \
+            genisoimage \
+            qemu-utils
 
       - name: Build Subu5
         run: |
           chmod +x scripts/build.sh
           sudo ./scripts/build.sh
 
-      - name: List output
+      - name: Verify ISO
         run: |
-          find . -type f \
-            \( -name "*.iso" -o -name "*.img" \) \
-            -print
+          test -f output/Subu5-noble-amd64.iso
+
+          echo "ISO generated successfully:"
+          ls -lh output/Subu5-noble-amd64.iso
+
+          echo "SHA256:"
+          sha256sum output/Subu5-noble-amd64.iso
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4
         with:
-          name: Subu5-ISO
-          path: |
-            output/*.iso
+          name: Subu5-noble-amd64
+          path: output/Subu5-noble-amd64.iso
+          if-no-files-found: error
