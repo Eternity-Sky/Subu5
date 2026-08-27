@@ -66,6 +66,16 @@ sudo env \
     "${LIVECD_ROOTFS}/config"
 
 echo
+echo "Configuring APT sources for universe and multiverse..."
+
+# Ensure the chroot environment has proper APT sources
+sudo tee config/archives/chroot.list > /dev/null << EOF
+deb http://archive.ubuntu.com/ubuntu ${SUITE} main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu ${SUITE}-updates main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu ${SUITE}-security main restricted universe multiverse
+EOF
+
+echo
 echo "[3/6] Applying Subu5 filesystem..."
 
 # live-build uses config/includes.chroot as the filesystem overlay.

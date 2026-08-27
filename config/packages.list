@@ -1,42 +1,11 @@
 # Subu5 default packages
 # This list defines packages to include in the Subu5 Desktop ISO
+# 
+# First phase: Let livecd-rootfs handle Ubuntu Desktop base
+# We will add custom packages incrementally after base build succeeds
 
-# Desktop environment
-gnome-session
-gnome-shell
-gdm3
-
-# Core applications
-firefox
-thunderbird
-libreoffice
-gnome-terminal
-nautilus
-evince
-eog
-
-# System utilities
-gparted
-gnome-disk-utility
-baobab
-gnome-system-monitor
-
-# Network
-network-manager
-network-manager-gnome
-
-# Multimedia
-vlc
-rhythmbox
-shotwell
-
-# Development tools
-git
-vim
-nano
-build-essential
-
-# Subu5-specific (will be added later)
+# Minimal set for now - will be expanded in later phases
+# Subu5-specific packages (will be added later)
 # subu5-desktop
 # subu5-theme
 # subu5-welcome
